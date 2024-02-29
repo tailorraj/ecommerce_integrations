@@ -17,6 +17,8 @@ from ecommerce_integrations.shopify.constants import (
 	WEIGHT_TO_ERPNEXT_UOM_MAP,
 )
 from ecommerce_integrations.shopify.utils import create_shopify_log
+from ecommerce_integrations.shopify.real_time_update import is_enabled_brand_item
+
 
 
 class ShopifyProduct:
@@ -377,7 +379,7 @@ def upload_erpnext_item(doc, method=None):
 	)
 	is_new_product = not bool(product_id)
 
-	if is_new_product:
+	if is_new_product and is_enabled_brand_item(template_item.name):
 		product = Product()
 		product.published = False
 		product.status = "active" if setting.sync_new_item_as_active else "draft"
