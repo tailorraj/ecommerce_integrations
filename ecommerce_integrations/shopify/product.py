@@ -2,7 +2,7 @@ from typing import Optional
 
 import frappe
 from frappe import _, msgprint
-from frappe.utils import cint, cstr
+from frappe.utils import cint, cstr,today
 from frappe.utils.nestedset import get_root_of
 from shopify.resources import Product, Variant
 
@@ -584,4 +584,32 @@ def update_product_erpnext(payload, request_id=None):
     else:
         frappe.log_error(title="Product Price Update Error",message="Product {} not found while updating price".format(payload['id']))
 
-	
+
+
+def bulk_update_items_to_shopify():
+    today_date = today()
+
+    try:
+        items = frappe.db.get_all(
+            "Item",
+            filters={"modified": ["like", f"{today_date}%"]},
+            fields=["name"]
+        )
+
+        if not items:
+            return
+
+        for item in items:
+            try:
+                upload_item_to_shopify(item)
+            except Exception as e:
+                frappe.log_error(
+                    title="Shopify Upload Error",
+                    message=f"Failed to upload Item: {item['name']}\n\n{frappe.get_traceback()}"
+                )
+
+    except Exception as e:
+        frappe.log_error(
+            title="Shopify Bulk Upload Failure",
+            message=f"Unexpected error during bulk update on {today_date}\n\n{frappe.get_traceback()}"
+        )
