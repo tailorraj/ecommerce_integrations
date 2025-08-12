@@ -74,6 +74,11 @@ doctype_js = {
 # before_install = "ecommerce_integrations.install.before_install"
 # after_install = "ecommerce_integrations.install.after_install"
 
+
+before_uninstall = "ecommerce_integrations.uninstall.before_uninstall"
+
+fixtures = [{"dt": "Custom Field", "filters": [["name", "in", ["Item-product_handle"]]]}]
+
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
@@ -130,20 +135,41 @@ doc_events = {
 		"on_cancel": "ecommerce_integrations.unicommerce.invoice.on_cancel",
 		"before_submit": "ecommerce_integrations.shopify.sales_invoice.sync_sales_invoice_to_shopify",
 	},
+	"Delivery Note":{
+		"on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"		
+	},
+    "Sales Invoice":{
+		"on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"		
+	},
+    "Purchase Receipt":{
+		"on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"		
+	},
+    "Purchase Invoice":{
+		"on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"		
+	},
+    "Stock Entry":{
+        "on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"
+	}
 }
 
 # Scheduled Tasks
 # ---------------
 
 scheduler_events = {
-	"all": ["ecommerce_integrations.shopify.inventory.update_inventory_on_shopify"],
+	# "all": ["ecommerce_integrations.shopify.inventory.update_inventory_on_shopify"],
 	"daily": [],
 	"daily_long": [
 		"ecommerce_integrations.zenoti.doctype.zenoti_settings.zenoti_settings.sync_stocks"
 	],
 	"hourly": [
-		"ecommerce_integrations.shopify.order.sync_old_orders",
+		# "ecommerce_integrations.shopify.order.sync_old_orders",
 		"ecommerce_integrations.amazon.doctype.amazon_sp_api_settings.amazon_sp_api_settings.schedule_get_order_details",
+        "ecommerce_integrations.shopify.product.bulk_update_items_to_shopify"
 	],
 	"hourly_long": [
 		"ecommerce_integrations.zenoti.doctype.zenoti_settings.zenoti_settings.sync_invoices",

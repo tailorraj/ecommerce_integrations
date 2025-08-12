@@ -2,7 +2,7 @@ from typing import Optional
 
 import frappe
 from frappe import _, msgprint
-from frappe.utils import cint, cstr
+from frappe.utils import cint, cstr,today
 from frappe.utils.nestedset import get_root_of
 from shopify.resources import Product, Variant
 
@@ -17,6 +17,8 @@ from ecommerce_integrations.shopify.constants import (
 	WEIGHT_TO_ERPNEXT_UOM_MAP,
 )
 from ecommerce_integrations.shopify.utils import create_shopify_log
+from ecommerce_integrations.shopify.real_time_update import is_enabled_brand_item
+
 
 
 class ShopifyProduct:
@@ -323,6 +325,12 @@ def get_item_code(shopify_item):
 		return item.item_code
 
 
+
+@frappe.whitelist()
+def upload_item_to_shopify(name):
+	item_doc = frappe.get_doc("Item",name)
+	upload_erpnext_item(item_doc)
+
 @temp_shopify_session
 def upload_erpnext_item(doc, method=None):
 	"""This hook is called when inserting new or updating existing `Item`.
@@ -336,6 +344,13 @@ def upload_erpnext_item(doc, method=None):
 		return
 
 	setting = frappe.get_doc(SETTING_DOCTYPE)
+
+	# Not Found Enabled Item Group Data
+	
+	enable_item_groups = [ig.item_group for ig in setting.enabled_item_group]
+	
+	if doc.item_group not in enable_item_groups:
+		return
 
 	if not setting.is_enabled() or not setting.upload_erpnext_items:
 		return
@@ -364,7 +379,7 @@ def upload_erpnext_item(doc, method=None):
 	)
 	is_new_product = not bool(product_id)
 
-	if is_new_product:
+	if is_new_product and is_enabled_brand_item(template_item.name):
 		product = Product()
 		product.published = False
 		product.status = "active" if setting.sync_new_item_as_active else "draft"
@@ -498,6 +513,8 @@ def map_erpnext_item_to_shopify(shopify_product: Product, erpnext_item):
 	shopify_product.title = erpnext_item.item_name
 	shopify_product.body_html = erpnext_item.description
 	shopify_product.product_type = erpnext_item.item_group
+	shopify_product.vendor = erpnext_item.brand
+	shopify_product.tags = ["erp_created"]
 
 	if erpnext_item.weight_uom in WEIGHT_TO_ERPNEXT_UOM_MAP.values():
 		# reverse lookup for key
@@ -556,3 +573,43 @@ def write_upload_log(status: bool, product: Product, item, action="Created") -> 
 			message=f"{action} Item: {item.name}, shopify product: {product.id}",
 			method="upload_erpnext_item",
 		)
+
+@frappe.whitelist()
+def update_product_erpnext(payload, request_id=None):
+    erpnext_item = frappe.db.get_value("Ecommerce Item",{"integration_item_code":payload['id']},"erpnext_item_code")
+    if erpnext_item:
+        erpnext_price = frappe.db.get_value("Item",erpnext_item,"shopify_selling_rate")
+        if erpnext_price != payload['variants'][0]['price']:
+            frappe.db.set_value("Item",erpnext_item,"shopify_selling_rate",payload['variants'][0]['price'])
+    else:
+        frappe.log_error(title="Product Price Update Error",message="Product {} not found while updating price".format(payload['id']))
+
+
+
+def bulk_update_items_to_shopify():
+    today_date = today()
+
+    try:
+        items = frappe.db.get_all(
+            "Item",
+            filters={"modified": ["like", f"{today_date}%"]},
+            fields=["name"]
+        )
+
+        if not items:
+            return
+
+        for item in items:
+            try:
+                upload_item_to_shopify(item)
+            except Exception as e:
+                frappe.log_error(
+                    title="Shopify Upload Error",
+                    message=f"Failed to upload Item: {item['name']}\n\n{frappe.get_traceback()}"
+                )
+
+    except Exception as e:
+        frappe.log_error(
+            title="Shopify Bulk Upload Failure",
+            message=f"Unexpected error during bulk update on {today_date}\n\n{frappe.get_traceback()}"
+        )

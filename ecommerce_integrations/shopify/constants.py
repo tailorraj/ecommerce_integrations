@@ -6,7 +6,7 @@ MODULE_NAME = "shopify"
 SETTING_DOCTYPE = "Shopify Setting"
 OLD_SETTINGS_DOCTYPE = "Shopify Settings"
 
-API_VERSION = "2022-04"
+API_VERSION = "2023-04"
 
 WEBHOOK_EVENTS = [
 	"orders/create",
@@ -16,6 +16,8 @@ WEBHOOK_EVENTS = [
 	"orders/partially_fulfilled",
 	"orders/updated",
 	"discounts/create",
+	"products/update"
+
 ]
 
 EVENT_MAPPER = {
@@ -25,6 +27,8 @@ EVENT_MAPPER = {
 	"orders/cancelled": "ecommerce_integrations.shopify.order.cancel_order",
 	"orders/partially_fulfilled": "ecommerce_integrations.shopify.order.order_fulfilled",
  	"discounts/create": "ecommerce_integrations.shopify.coupon.create_coupon_from_shopify_discount",
+	"products/update":"ecommerce_integrations.shopify.product.update_product_erpnext"
+
 }
 
 SHOPIFY_VARIANTS_ATTR_LIST = ["option1", "option2", "option3"]
