@@ -129,3 +129,27 @@ def _map_address_fields(shopify_address, customer_name, address_type, email):
 		address_fields["phone"] = phone
 
 	return address_fields
+
+def get_customer_email(customer_name):
+    """Fetch the primary email address for a customer from Contact."""
+    contact_name = frappe.db.get_value(
+        "Dynamic Link",
+        {"link_doctype": "Customer", "link_name": customer_name, "parenttype": "Contact"},
+        "parent"
+    )
+    if contact_name:
+        email = frappe.db.get_value(
+            "Contact Email",
+            {"parent": contact_name, "is_primary": 1},
+            "email_id"
+        )
+        if email:
+            return email
+        # fallback to any email if no primary
+        email = frappe.db.get_value(
+            "Contact Email",
+            {"parent": contact_name},
+            "email_id"
+        )
+        return email
+    return None

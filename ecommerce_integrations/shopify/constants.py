@@ -14,14 +14,17 @@ WEBHOOK_EVENTS = [
 	"orders/fulfilled",
 	"orders/cancelled",
 	"orders/partially_fulfilled",
+	"orders/updated",
+	"discounts/create",
 ]
 
 EVENT_MAPPER = {
 	"orders/create": "ecommerce_integrations.shopify.order.sync_sales_order",
 	"orders/paid": "ecommerce_integrations.shopify.invoice.prepare_sales_invoice",
-	"orders/fulfilled": "ecommerce_integrations.shopify.fulfillment.prepare_delivery_note",
+	"orders/fulfilled": "ecommerce_integrations.shopify.order.order_fulfilled",
 	"orders/cancelled": "ecommerce_integrations.shopify.order.cancel_order",
-	"orders/partially_fulfilled": "ecommerce_integrations.shopify.fulfillment.prepare_delivery_note",
+	"orders/partially_fulfilled": "ecommerce_integrations.shopify.order.order_fulfilled",
+ 	"discounts/create": "ecommerce_integrations.shopify.coupon.create_coupon_from_shopify_discount",
 }
 
 SHOPIFY_VARIANTS_ATTR_LIST = ["option1", "option2", "option3"]

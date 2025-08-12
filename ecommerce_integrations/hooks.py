@@ -36,10 +36,12 @@ doctype_js = {
 	"Sales Order": [
 		"public/js/unicommerce/sales_order.js",
 		"public/js/common/ecommerce_transactions.js",
+  		"public/js/shopify/sales_order_coupon.js",
 	],
 	"Sales Invoice": [
 		"public/js/unicommerce/sales_invoice.js",
 		"public/js/common/ecommerce_transactions.js",
+  		"public/js/shopify/sales_invoice_coupon.js",
 	],
 	"Item": "public/js/unicommerce/item.js",
 	"Stock Entry": "public/js/unicommerce/stock_entry.js",
@@ -114,6 +116,7 @@ doc_events = {
 	"Sales Order": {
 		"on_update_after_submit": "ecommerce_integrations.unicommerce.order.update_shipping_info",
 		"on_cancel": "ecommerce_integrations.unicommerce.status_updater.ignore_pick_list_on_sales_order_cancel",
+		"before_submit": "ecommerce_integrations.shopify.sales_order.sync_sales_order_to_shopify",
 	},
 	"Stock Entry": {
 		"validate": "ecommerce_integrations.unicommerce.grn.validate_stock_entry_for_grn",
@@ -125,6 +128,7 @@ doc_events = {
 	"Sales Invoice": {
 		"on_submit": "ecommerce_integrations.unicommerce.invoice.on_submit",
 		"on_cancel": "ecommerce_integrations.unicommerce.invoice.on_cancel",
+		"before_submit": "ecommerce_integrations.shopify.sales_invoice.sync_sales_invoice_to_shopify",
 	},
 }
 

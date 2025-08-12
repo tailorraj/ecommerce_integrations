@@ -33,15 +33,23 @@
   "column_break_27",
   "sync_delivery_note",
   "sync_sales_invoice",
+  "sync_sales_invoice_with_location",
   "add_shipping_as_item",
   "consolidate_taxes",
   "section_break_22",
   "html_16",
   "taxes",
+  "section_break_zeoy",
+  "default_sales_tax_account",
+  "tcs_account",
+  "column_break_qibo",
+  "default_shipping_charges_account",
   "erpnext_to_shopify_sync_section",
+  "sync_sales_order",
   "upload_erpnext_items",
   "update_shopify_item_on_update",
   "column_break_34",
+  "sync_sales_invoice_to_shopify",
   "sync_new_item_as_active",
   "upload_variants_as_items",
   "inventory_sync_section",
@@ -210,6 +218,7 @@
    "default": "0",
    "fieldname": "sync_sales_invoice",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Import Sales Invoice from Shopify if Payment is marked"
   },
   {
@@ -371,12 +380,59 @@
    "fieldname": "consolidate_taxes",
    "fieldtype": "Check",
    "label": "Consolidate Taxes in Order"
+  },
+  {
+   "default": "0",
+   "fieldname": "sync_sales_invoice_with_location",
+   "fieldtype": "Check",
+   "label": "Import Sales Invoice with location when order is fulfilled"
+  },
+  {
+   "fieldname": "section_break_zeoy",
+   "fieldtype": "Section Break",
+   "hide_border": 1
+  },
+  {
+   "description": "When no sales tax mapping is found this tax account will be used as the default account. This is only applied for Sales Tax. Any shipping related charges still need to be mapped separately.",
+   "fieldname": "default_sales_tax_account",
+   "fieldtype": "Link",
+   "label": "Default Sales Tax Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "tcs_account",
+   "fieldtype": "Link",
+   "label": "Default TCS Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_qibo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "When no shipping charge account mapping is found this account will be used as the default account.",
+   "fieldname": "default_shipping_charges_account",
+   "fieldtype": "Link",
+   "label": "Default Shipping Charges Account",
+   "options": "Account"
+  },
+  {
+   "default": "0",
+   "fieldname": "sync_sales_order",
+   "fieldtype": "Check",
+   "label": "Sync Sales Order"
+  },
+  {
+   "default": "0",
+   "fieldname": "sync_sales_invoice_to_shopify",
+   "fieldtype": "Check",
+   "label": "Sync Sales Invoice to Shopify"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-02-10 10:36:12.940019",
+ "modified": "2025-08-11 17:51:07.152556",
  "modified_by": "Administrator",
  "module": "shopify",
  "name": "Shopify Setting",

@@ -14,6 +14,39 @@ from ecommerce_integrations.shopify.constants import (
 	SETTING_DOCTYPE,
 )
 
+def get_shopify_prefs():
+    setting = frappe.get_doc(SETTING_DOCTYPE)
+    return setting, {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-Shopify-Access-Token": setting.get_password("password")
+    }
+
+def shopify_url_to_admin_url(shopify_url):
+    """
+    Converts a Shopify store URL to the new Shopify admin URL format.
+    
+    Args:
+        shopify_url (str): The Shopify store URL (e.g., 'development-togglehead.myshopify.com')
+    
+    Returns:
+        str: The Shopify admin URL (e.g., 'https://admin.shopify.com/store/development-togglehead/')
+    """
+    if not shopify_url:
+        return ""
+    
+    # Remove any protocol and trailing slashes
+    clean_url = shopify_url.replace("https://", "").replace("http://", "").rstrip("/")
+    
+    # Extract the store name from the URL
+    # Handle both 'store-name.myshopify.com' and 'store-name' formats
+    if ".myshopify.com" in clean_url:
+        store_name = clean_url.replace(".myshopify.com", "")
+    else:
+        store_name = clean_url
+    
+    return f"https://admin.shopify.com/store/{store_name}/"
+   
 
 def create_shopify_log(**kwargs):
 	return create_log(module_def=MODULE_NAME, **kwargs)

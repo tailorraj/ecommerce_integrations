@@ -116,6 +116,40 @@ def create_sales_order(shopify_order, setting, company=None):
 			so.update({"company": company, "status": "Draft"})
 		so.flags.ignore_mandatory = True
 		so.flags.shopiy_order_json = json.dumps(shopify_order)
+  
+		discount_code = None
+		discount_percent = None
+		coupon_code_name = None
+
+		if shopify_order.get("discount_applications"):
+			discount_app = shopify_order["discount_applications"][0]
+			coupon_code_name = discount_app.get("code")
+			discount_percent = float(discount_app.get("value", 0))
+		if shopify_order.get("discount_codes"):
+			discount_code = shopify_order["discount_codes"][0].get("amount")
+
+		shopify_coupon_code_name = None
+		if coupon_code_name:
+			shopify_coupon_code = frappe.db.get_value(
+				"Shopify Coupon Code", {"coupon_code_name": coupon_code_name}, "name"
+			)
+			if not shopify_coupon_code:
+				coupon_doc = frappe.get_doc(
+					{
+						"doctype": "Shopify Coupon Code",
+						"coupon_code_name": coupon_code_name,
+						"discount_type": "Percentage",
+						"percent_value": discount_percent,
+						"status": "Active",
+					}
+				)
+				coupon_doc.insert(ignore_permissions=True)
+				shopify_coupon_code_name = coupon_doc.name
+			else:
+				shopify_coupon_code_name = shopify_coupon_code
+
+		so.shopify_coupon_code = shopify_coupon_code_name
+  
 		so.save(ignore_permissions=True)
 		so.submit()
 
@@ -134,6 +168,10 @@ def get_order_items(order_items, setting, delivery_date, taxes_inclusive):
 	product_not_exists = []
 
 	for shopify_item in order_items:
+        # Exclude TCS and TCS - TCS from sales order items
+		name = shopify_item.get("name", "").strip().upper()
+		if name in ("TCS", "TCS - TCS"):
+			continue
 		if not shopify_item.get("product_exists"):
 			all_product_exists = False
 			product_not_exists.append(
@@ -207,6 +245,23 @@ def get_order_taxes(shopify_order, setting, items):
 					"dont_recompute_tax": 1,
 				}
 			)
+    # "account_head": frappe.db.get_single_value(SETTING_DOCTYPE, "Output Tax IGST - A") or setting.cost_center,
+    # Add TCS as a tax if present as a line item
+	for line_item in line_items:
+		name = line_item.get("name", "").strip().upper()
+		if name in ("TCS", "TCS - TCS"):
+			tcs_amount = flt(line_item.get("price", 0)) * cint(line_item.get("quantity", 1))
+			tcs_tax = {
+				"charge_type": "Actual",
+				"account_head": frappe.db.get_single_value(SETTING_DOCTYPE, "tcs_account") or setting.cost_center,
+				"description": "TCS",
+				"tax_amount": tcs_amount,
+				"included_in_print_rate": 0,
+				"cost_center": setting.cost_center,
+				"item_wise_tax_detail": {},
+				"dont_recompute_tax": 1,
+			}
+			taxes.append(tcs_tax)
 
 	update_taxes_with_shipping_lines(
 		taxes,
@@ -427,3 +482,35 @@ def _fetch_old_orders(from_time, to_time):
 			# Using generator instead of fetching all at once is better for
 			# avoiding rate limits and reducing resource usage.
 			yield order.to_dict()
+
+def order_fulfilled(payload, request_id=None):
+    """
+    Comprehensive function to handle order fulfillment from Shopify.
+    Creates both delivery notes and sales invoices with location-based cost centers and naming series.
+    """
+    frappe.set_user("Administrator")
+    setting = frappe.get_doc(SETTING_DOCTYPE)
+    frappe.flags.request_id = request_id
+
+    order = payload
+
+    try:
+        sales_order = get_sales_order(cstr(order["id"]))
+        if not sales_order:
+            create_shopify_log(status="Invalid", message="Sales Order not found for order fulfillment.")
+            return
+
+        # Create delivery notes using existing fulfillment logic
+        if cint(setting.sync_delivery_note):
+            from ecommerce_integrations.shopify.fulfillment import create_delivery_note
+            create_delivery_note(order, setting, sales_order)
+        
+        # Create sales invoice with location-based naming and cost center
+        if cint(setting.sync_sales_invoice_with_location):
+            from ecommerce_integrations.shopify.invoice import create_sales_invoice_with_location_mapping
+            create_sales_invoice_with_location_mapping(order, setting, sales_order)
+        
+        create_shopify_log(status="Success", message="Order fulfillment processed successfully.")
+
+    except Exception as e:
+        create_shopify_log(status="Error", exception=e, rollback=True)
