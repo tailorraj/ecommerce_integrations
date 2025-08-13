@@ -15,7 +15,7 @@ from ecommerce_integrations.shopify.inventory import _log_inventory_update_statu
 
 
 
-
+#realtime stock update
 def update_inventory_on_shopify_real_time(doc):
 	"""Upload stock levels from ERPNext to Shopify.
 
