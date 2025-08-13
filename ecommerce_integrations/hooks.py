@@ -240,3 +240,13 @@ before_tests = "ecommerce_integrations.utils.before_test.before_tests"
 # 		"doctype": "{doctype_4}"
 # 	}
 # ]
+
+# Fixtures to export all custom fields for the 'shopify' module
+fixtures = [
+	{
+		"dt": "Custom Field",
+		"filters": [
+			["module", "=", "shopify"]
+		]
+	}
+]

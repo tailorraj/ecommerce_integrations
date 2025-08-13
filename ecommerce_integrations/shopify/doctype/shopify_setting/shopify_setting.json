@@ -39,6 +39,7 @@
   "add_shipping_as_item",
   "consolidate_taxes",
   "enabled_brand",
+  "enabled_brand",
   "section_break_22",
   "html_16",
   "taxes",
@@ -433,12 +434,24 @@
    "fieldname": "sync_sales_invoice_to_shopify",
    "fieldtype": "Check",
    "label": "Sync Sales Invoice to Shopify"
+  },
+  {
+   "fieldname": "ecommerce_item_brand",
+   "fieldtype": "Table",
+   "label": "Ecommerce Item Brand",
+   "options": "Ecommerce Item Brand"
+  },
+  {
+   "fieldname": "enabled_brand",
+   "fieldtype": "Table",
+   "label": "Enabled Brand",
+   "options": "Ecommerce Item Brand"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-11 17:51:07.152556",
+ "modified": "2025-08-13 13:51:43.462337",
  "modified_by": "Administrator",
  "module": "shopify",
  "name": "Shopify Setting",
