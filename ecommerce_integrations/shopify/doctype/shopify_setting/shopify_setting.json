@@ -38,6 +38,7 @@
   "add_shipping_as_item",
   "consolidate_taxes",
   "enabled_brand",
+  "upload_item_price_only",
   "section_break_22",
   "html_16",
   "taxes",
@@ -407,12 +408,18 @@
    "fieldtype": "Table",
    "label": "Enabled Item Group",
    "options": "Enable Item Group"
+  },
+  {
+   "default": "0",
+   "fieldname": "upload_item_price_only",
+   "fieldtype": "Check",
+   "label": "Upload Item Price Only"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-08-17 16:08:11.083304",
+ "modified": "2025-08-22 12:00:23.161267",
  "modified_by": "Administrator",
  "module": "shopify",
  "name": "Shopify Setting",
