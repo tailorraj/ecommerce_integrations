@@ -6,13 +6,17 @@ frappe.listview_settings['Item'] = {
             const d = new frappe.ui.Dialog({
                 title: 'Batch Update Price',
                 fields: [
-                    {fieldtype: 'Small Text', fieldname: 'csv', label: 'CSV (Item Code,Shopify Selling Rate)', reqd: 1},
+                    {fieldtype: 'Small Text', fieldname: 'csv', label: 'CSV (Item Code,Shopify Selling Rate)', reqd: 1, hidden: 1},
+                    {fieldtype: 'HTML', fieldname: 'file_html', label: 'CSV File'},
                     {fieldtype: 'HTML', fieldname: 'progress_html', label: 'Progress'}
                 ],
                 primary_action_label: 'Start',
                 primary_action: function() {
                     const csv = d.get_value('csv');
-                    if (!csv) return;
+                    if (!csv) {
+                        frappe.msgprint(__('Please choose a CSV file first.'));
+                        return;
+                    }
                     // kick off background job
                     frappe.call({
                         method: 'ecommerce_integrations.shopify.product.batch_update_prices_from_csv',
@@ -26,6 +30,21 @@ frappe.listview_settings['Item'] = {
             });
 
             d.show();
+
+            // create file input inside the dialog
+            const $fileWrapper = d.fields_dict.file_html.$wrapper;
+            const $input = $(`<input type="file" accept=".csv,text/csv" />`);
+            $fileWrapper.empty().append($input);
+            $input.on('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const content = evt.target.result;
+                    d.set_value('csv', content);
+                };
+                reader.readAsText(file);
+            });
 
             const messages = [];
             const handler = function(data) {
