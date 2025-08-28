@@ -2,7 +2,7 @@ from typing import Optional
 
 import frappe
 from frappe import _, msgprint
-from frappe.utils import cint, cstr,today
+from frappe.utils import cint, cstr, today
 from frappe.utils.nestedset import get_root_of
 from shopify.resources import Product, Variant
 
@@ -345,6 +345,14 @@ def upload_erpnext_item(doc, method=None):
 
 	setting = frappe.get_doc(SETTING_DOCTYPE)
 
+	# If configured to only upload item price, exit early
+	if setting.upload_item_price_only:
+		try:
+			upload_item_price_only(doc)
+		except Exception as e:
+			frappe.log_error(message=frappe.get_traceback(), title="Shopify Price Upload Error")
+		return
+
 	# Not Found Enabled Item Group Data
 	
 	enable_item_groups = [ig.item_group for ig in setting.enabled_item_group]
@@ -613,3 +621,198 @@ def bulk_update_items_to_shopify():
             title="Shopify Bulk Upload Failure",
             message=f"Unexpected error during bulk update on {today_date}\n\n{frappe.get_traceback()}"
         )
+
+
+def upload_item_price_only(item_doc):
+	"""Update only the price (ITEM_SELLING_RATE_FIELD) of the mapped Shopify variant/product.
+
+	Expects `item_doc` to be a `frappe._dict` or `frappe.model.document.Document` representing an Item.
+	"""
+	from shopify.resources import Variant as ShopifyVariant, Product as ShopifyProduct
+
+	# resolve item name if a dict with name key is passed
+	if isinstance(item_doc, dict):
+		item_name = item_doc.get("name") or item_doc.get("doctype")
+		item = frappe.get_doc("Item", item_name)
+	else:
+		item = item_doc
+
+	setting = frappe.get_doc(SETTING_DOCTYPE)
+
+	# find mapping in Ecommerce Item
+	ecom = frappe.db.get_value(
+		"Ecommerce Item",
+		{"erpnext_item_code": item.name, "integration": MODULE_NAME},
+		["integration_item_code", "variant_id"],
+		as_dict=True,
+	)
+	if not ecom:
+		# nothing to update on shopify
+		return
+
+	product_id = ecom.get("integration_item_code")
+	variant_id = ecom.get("variant_id")
+
+	# fetch shopify product
+	shopify_product = None
+	try:
+		shopify_product = ShopifyProduct.find(product_id)
+	except Exception:
+		# try fetching by id as string
+		try:
+			shopify_product = ShopifyProduct.find(int(product_id))
+		except Exception:
+			frappe.log_error(message=f"Failed to fetch Shopify product {product_id}", title="Shopify Price Update Error")
+			return
+
+	if not shopify_product:
+		return
+
+	# determine price to set
+	price = item.get(ITEM_SELLING_RATE_FIELD) or item.get("price")
+	if price is None:
+		return
+
+	# update variant price if variant_id exists
+	try:
+		if variant_id:
+			variant = None
+			for v in shopify_product.variants:
+				if str(v.id) == str(variant_id):
+					variant = v
+					break
+			if variant:
+				variant.price = price
+				variant.save()
+			else:
+				# fallback: update default variant
+				default_variant = shopify_product.variants[0]
+				default_variant.price = price
+				default_variant.save()
+		else:
+			# update default variant price
+			default_variant = shopify_product.variants[0]
+			default_variant.price = price
+			default_variant.save()
+
+		create_shopify_log(status="Success", message=f"Updated price for Item {item.name} on Shopify")
+	except Exception as e:
+		frappe.log_error(message=frappe.get_traceback(), title="Shopify Price Update Error")
+		create_shopify_log(status="Error", exception=e)
+
+
+@frappe.whitelist()
+def batch_update_prices_from_csv(csv: str, request_id=None):
+	"""CSV expected with header: Item Code,Shopify Selling Rate
+
+	This enqueues a background job that processes rows and updates the item's
+	`shopify_selling_rate` field. Progress is sent over frappe realtime channel
+	'shopify_price_batch'.
+	"""
+	# Enqueue the worker to run as the current user so realtime messages go to them
+	frappe.enqueue('ecommerce_integrations.shopify.product._process_price_csv', csv=csv, user=frappe.session.user)
+	return True
+
+
+def _process_price_csv(csv: str, user=None):
+	import io, csv as pycsv, time
+	import frappe
+	from ecommerce_integrations.shopify.connection import temp_shopify_session
+
+	try:
+		rows = list(pycsv.reader(io.StringIO(csv)))
+	except Exception as e:
+		frappe.log_error(title='Batch Price CSV Parse Error', message=frappe.get_traceback())
+		return
+
+	# normalize header
+	if not rows:
+		frappe.log_error(title='Batch Price CSV Empty', message='CSV payload was empty')
+		return
+
+	header = [h.strip().lower() for h in rows[0]]
+	item_code_idx = None
+	price_idx = None
+	for i, h in enumerate(header):
+		if h in ('item code', 'item_code', 'itemcode'):
+			item_code_idx = i
+		if h in ('shopify selling rate', 'shopify_selling_rate', 'price'):
+			price_idx = i
+
+	if item_code_idx is None or price_idx is None:
+		frappe.log_error(title='Batch Price CSV Missing Header', message=f'Header columns not found: {header}')
+		return
+
+	data_rows = rows[1:]
+	total = len(data_rows)
+	progress = 0
+	channel = 'shopify_price_batch'
+
+	# If user is None, try to use session user (may be None in some worker contexts)
+	realtime_user = user or frappe.session.user
+
+	for row_no, r in enumerate(data_rows, start=1):
+		try:
+			# protect against short rows
+			if len(r) <= max(item_code_idx, price_idx):
+				frappe.log_error(title='Batch Price CSV Row Too Short', message=f'Row {row_no} has insufficient columns: {r}')
+				continue
+
+			item_code = r[item_code_idx].strip()
+			price = r[price_idx].strip()
+
+			if not item_code:
+				frappe.log_error(title='Batch Price CSV Missing Item Code', message=f'Row {row_no} missing item code: {r}')
+				continue
+
+			# update item value in DB and push price-only update to Shopify
+			try:
+				# persist price to Item
+				frappe.db.set_value('Item', item_code, 'shopify_selling_rate', price)
+				frappe.db.commit()
+
+				# call price-only uploader under shopify session to push to Shopify
+				try:
+					temp_shopify_session(upload_item_price_only)(frappe.get_doc('Item', item_code))
+					result = 'success'
+					message = f'Updated {item_code}'
+				except Exception as e:
+					result = 'failed'
+					message = f'Failed {item_code}: {str(e)}'
+					frappe.log_error(title='Shopify Price Push Error', message=f'Error pushing price for {item_code}: {frappe.get_traceback()}')
+
+				# small sleep to avoid Shopify rate limits
+				time.sleep(0.6)
+
+				progress += 1
+				frappe.publish_realtime(
+					channel,
+					dict(
+						total=total,
+						progress=progress,
+						current=item_code,
+						status='processing',
+						result=result,
+						message=message,
+					),
+					user=realtime_user,
+				)
+			except Exception:
+				frappe.log_error(title='Batch Price Update Error', message=f'Failed to update Item {item_code} on row {row_no}\n{frappe.get_traceback()}')
+				frappe.publish_realtime(
+					channel,
+					dict(
+						total=total,
+						progress=progress,
+						current=item_code,
+						status='processing',
+						result='failed',
+						message=f'Failed {item_code}: DB write error',
+					),
+					user=realtime_user,
+				)
+
+		except Exception:
+			frappe.log_error(title='Batch Price Processing Error', message=f'Error processing row {row_no}: {frappe.get_traceback()}')
+
+	frappe.publish_realtime(channel, dict(total=total, progress=progress, current='', status='done'), user=realtime_user)
