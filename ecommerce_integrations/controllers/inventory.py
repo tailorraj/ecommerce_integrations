@@ -58,8 +58,6 @@ def get_inventory_levels_of_group_warehouse(warehouse: str, integration: str):
 				AND integration = %s
 			GROUP BY
 				ei.erpnext_item_code
-			HAVING
-				last_updated > last_synced
 			""",
 		values=all_warehouses + (integration,),
 		as_dict=1,
