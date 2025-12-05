@@ -162,7 +162,8 @@ scheduler_events = {
 	"all": ["ecommerce_integrations.shopify.inventory.update_inventory_on_shopify"],
 	"daily": [],
 	"daily_long": [
-		"ecommerce_integrations.zenoti.doctype.zenoti_settings.zenoti_settings.sync_stocks"
+		"ecommerce_integrations.zenoti.doctype.zenoti_settings.zenoti_settings.sync_stocks",
+        "ecommerce_integrations.ecommerce_integrations.schduler.cron_sync_items_to_shopify"
 	],
 	"hourly": [
 		# "ecommerce_integrations.shopify.order.sync_old_orders",
@@ -184,6 +185,9 @@ scheduler_events = {
 			"ecommerce_integrations.unicommerce.inventory.update_inventory_on_unicommerce",
 			"ecommerce_integrations.unicommerce.delivery_note.prepare_delivery_note",
 		],
+        "0 */2 * * *": [
+            "ecommerce_integrations.shopify.real_time_update.bulk_update_item_handle_and_image"
+        ]
 	},
 }
 
