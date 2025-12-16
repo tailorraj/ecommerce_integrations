@@ -77,7 +77,22 @@ doctype_list_js = {
 
 before_uninstall = "ecommerce_integrations.uninstall.before_uninstall"
 
-fixtures = [{"dt": "Custom Field", "filters": [["name", "in", ["Item-product_handle"]]]}]
+fixtures = [{"dt": "Custom Field", "filters": [["name", "in", [
+	"Item-product_handle",
+	"Item-custom_product_details",
+	"Item-custom_reference",
+	"Item-custom_collection",
+	"Item-custom_dial_size",
+	"Item-custom_column_break_8ho3g",
+	"Item-custom_dial_shape",
+	"Item-custom_case_material",
+	"Item-custom_diamonds",
+	"Item-custom_strapbracelet",
+	"Item-custom_gender",
+	"Item-custom_movement",
+	"Item-custom_water_resistant",
+	"Item-custom_brand_warranty"
+]]]}]
 
 # Desk Notifications
 # ------------------

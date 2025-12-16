@@ -34,9 +34,9 @@ shopify.ProductImporter = class {
 
 	async checkSyncStatus() {
 
-		const { message: jobs } = await frappe.call({ method: 'frappe.core.page.background_jobs.background_jobs.get_info' });
+		//const { message: jobs } = await frappe.call({ method: 'frappe.core.page.background_jobs.background_jobs.get_info' });
 
-		this.syncRunning = jobs.find(job => job.job_name == 'shopify.job.sync.all.products') !== undefined;
+		this.syncRunning = false;//jobs.find(job => job.job_name == 'shopify.job.sync.all.products') !== undefined;
 
 		if (this.syncRunning) {
 			this.toggleSyncAllButton();

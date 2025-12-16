@@ -18,6 +18,7 @@ from ecommerce_integrations.shopify.constants import (
 )
 from ecommerce_integrations.shopify.utils import create_shopify_log
 from ecommerce_integrations.shopify.real_time_update import is_enabled_brand_item
+from ecommerce_integrations.shopify.product_meta import add_metafields_to_item_dict
 
 
 
@@ -140,6 +141,10 @@ class ShopifyProduct:
 		integration_item_code = product_dict["id"]  # shopify product_id
 		variant_id = product_dict.get("variant_id", "")  # shopify variant_id if has variants
 		sku = item_dict["sku"]
+		
+		# Fetch and add metafields to item_dict (only for template items, not variants)
+		if not variant_of:
+			item_dict = add_metafields_to_item_dict(item_dict, integration_item_code)
 
 		if not _match_sku_and_link_item(
 			item_dict, integration_item_code, variant_id, variant_of=variant_of, has_variant=has_variant
