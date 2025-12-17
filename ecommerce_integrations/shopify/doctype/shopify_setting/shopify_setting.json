@@ -43,6 +43,9 @@
   "section_break_22",
   "html_16",
   "taxes",
+  "section_break_zeoy",
+  "default_sales_tax_account",
+  "default_shipping_charges_account",
   "erpnext_to_shopify_sync_section",
   "upload_erpnext_items",
   "update_shopify_item_on_update",
@@ -379,6 +382,29 @@
    "fieldname": "consolidate_taxes",
    "fieldtype": "Check",
    "label": "Consolidate Taxes in Order"
+  },
+  {
+  "description": "When no sales tax mapping is found this tax account will be used as the default account. This is only applied for Sales Tax. Any shipping related charges still need to be mapped separately.",
+   "fieldname": "default_sales_tax_account",
+   "fieldtype": "Link",
+   "label": "Default Sales Tax Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "section_break_zeoy",
+   "fieldtype": "Section Break",
+   "hide_border": 1
+  },
+  {
+   "fieldname": "column_break_qibo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "When no shipping charge account mapping is found this account will be used as the default account.",
+   "fieldname": "default_shipping_charges_account",
+   "fieldtype": "Link",
+   "label": "Default Shipping Charges Account",
+   "options": "Account"
   },
   {
    "fieldname": "enquiry_template_name",

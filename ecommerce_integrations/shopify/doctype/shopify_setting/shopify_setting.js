@@ -13,8 +13,6 @@ frappe.ui.form.on("Shopify Setting", {
 				});
 			},
 		});
-
-		ecommerce_integrations.shopify.shopify_setting.setup_queries(frm);
 	},
 
 	fetch_shopify_locations: function (frm) {

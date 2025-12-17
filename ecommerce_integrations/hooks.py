@@ -8,6 +8,7 @@ app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "developers@frappe.io"
 app_license = "GNU GPL v3.0"
+required_apps = ["frappe/erpnext"]
 
 # Includes in <head>
 # ------------------
@@ -257,3 +258,8 @@ before_tests = "ecommerce_integrations.utils.before_test.before_tests"
 # 		"doctype": "{doctype_4}"
 # 	}
 # ]
+
+
+default_log_clearing_doctypes = {
+	"Ecommerce Integration Log": 120,
+}
