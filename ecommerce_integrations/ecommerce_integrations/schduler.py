@@ -1,5 +1,5 @@
 import frappe
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime,get_datetime
 from ecommerce_integrations.shopify.product import upload_item_to_shopify
 
 BATCH_SIZE = 500
@@ -13,7 +13,7 @@ def cron_sync_items_to_shopify():
         return
 
     # If first run, set an old default timestamp
-    last_sync_time = setting.last_updated_erpnext_to_shopify or "2025-11-01 00:00:00"
+    last_sync_time = get_datetime(setting.last_updated_erpnext_to_shopify or "2025-11-01 00:00:00")
 
     # Get only items modified after last sync
     items = frappe.get_all(
@@ -40,7 +40,9 @@ def cron_sync_items_to_shopify():
 
                 # Track last modified timestamp
                 item_modified = frappe.db.get_value("Item", item_code, "modified")
-                if item_modified > latest_modified:
+                item_modified = get_datetime(item_modified)
+
+                if item_modified and item_modified > latest_modified:
                     latest_modified = item_modified
 
             except Exception:
