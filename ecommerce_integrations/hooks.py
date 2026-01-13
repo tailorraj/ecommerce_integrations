@@ -1,5 +1,3 @@
-from . import __version__ as app_version
-
 app_name = "ecommerce_integrations"
 app_title = "Ecommerce Integrations"
 app_publisher = "Frappe"
@@ -33,22 +31,20 @@ required_apps = ["frappe/erpnext"]
 
 # include js in doctype views
 doctype_js = {
-	"Shopify Settings": "public/js/shopify/old_settings.js",
-	"Sales Order": [
-		"public/js/unicommerce/sales_order.js",
-		"public/js/common/ecommerce_transactions.js",
-	],
-	"Sales Invoice": [
-		"public/js/unicommerce/sales_invoice.js",
-		"public/js/common/ecommerce_transactions.js",
-	],
-	"Item": "public/js/unicommerce/item.js",
-	"Stock Entry": "public/js/unicommerce/stock_entry.js",
-	"Pick List": "public/js/unicommerce/pick_list.js",
+    "Shopify Settings": "public/js/shopify/old_settings.js",
+    "Sales Order": [
+        "public/js/unicommerce/sales_order.js",
+        "public/js/common/ecommerce_transactions.js",
+    ],
+    "Sales Invoice": [
+        "public/js/unicommerce/sales_invoice.js",
+        "public/js/common/ecommerce_transactions.js",
+    ],
+    "Item": "public/js/unicommerce/item.js",
+    "Stock Entry": "public/js/unicommerce/stock_entry.js",
+    "Pick List": "public/js/unicommerce/pick_list.js",
 }
-doctype_list_js = {
-  "Item" : "public/js/shopify/item_list.js"
-}
+doctype_list_js = {"Item": "public/js/shopify/item_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -78,22 +74,33 @@ doctype_list_js = {
 
 before_uninstall = "ecommerce_integrations.uninstall.before_uninstall"
 
-fixtures = [{"dt": "Custom Field", "filters": [["name", "in", [
-	"Item-product_handle",
-	"Item-custom_product_details",
-	"Item-custom_reference",
-	"Item-custom_collection",
-	"Item-custom_dial_size",
-	"Item-custom_column_break_8ho3g",
-	"Item-custom_dial_shape",
-	"Item-custom_case_material",
-	"Item-custom_diamonds",
-	"Item-custom_strapbracelet",
-	"Item-custom_gender",
-	"Item-custom_movement",
-	"Item-custom_water_resistant",
-	"Item-custom_brand_warranty"
-]]]}]
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            [
+                "name",
+                "in",
+                [
+                    "Item-product_handle",
+                    "Item-custom_product_details",
+                    "Item-custom_reference",
+                    "Item-custom_collection",
+                    "Item-custom_dial_size",
+                    "Item-custom_column_break_8ho3g",
+                    "Item-custom_dial_shape",
+                    "Item-custom_case_material",
+                    "Item-custom_diamonds",
+                    "Item-custom_strapbracelet",
+                    "Item-custom_gender",
+                    "Item-custom_movement",
+                    "Item-custom_water_resistant",
+                    "Item-custom_brand_warranty",
+                ],
+            ]
+        ],
+    }
+]
 
 # Desk Notifications
 # ------------------
@@ -126,85 +133,88 @@ fixtures = [{"dt": "Custom Field", "filters": [["name", "in", [
 # Hook on document methods and events
 
 doc_events = {
-	"Item": {
-		"after_insert": "ecommerce_integrations.shopify.product.upload_erpnext_item",
-		"on_update": "ecommerce_integrations.shopify.product.upload_erpnext_item",
-		"validate": [
-			"ecommerce_integrations.utils.taxation.validate_tax_template",
-			"ecommerce_integrations.unicommerce.product.validate_item",
-		],
-	},
-	"Sales Order": {
-		"on_update_after_submit": "ecommerce_integrations.unicommerce.order.update_shipping_info",
-		"on_cancel": "ecommerce_integrations.unicommerce.status_updater.ignore_pick_list_on_sales_order_cancel",
-	},
-	"Stock Entry": {
-		"validate": "ecommerce_integrations.unicommerce.grn.validate_stock_entry_for_grn",
-		"on_submit": "ecommerce_integrations.unicommerce.grn.upload_grn",
-		"on_cancel": "ecommerce_integrations.unicommerce.grn.prevent_grn_cancel",
-	},
-	"Item Price": {"on_change": "ecommerce_integrations.utils.price_list.discard_item_prices"},
-	"Pick List": {"validate": "ecommerce_integrations.unicommerce.pick_list.validate"},
-	"Sales Invoice": {
-		"on_submit": "ecommerce_integrations.unicommerce.invoice.on_submit",
-		"on_cancel": "ecommerce_integrations.unicommerce.invoice.on_cancel",
-	},
-	"Delivery Note":{
-		"on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
-        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"		
-	},
-    "Sales Invoice":{
-		"on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
-        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"		
-	},
-    "Purchase Receipt":{
-		"on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
-        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"		
-	},
-    "Purchase Invoice":{
-		"on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
-        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"		
-	},
-    "Stock Entry":{
-        "on_submit":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
-        "on_cancel":"ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf"
-	}
+    "Item": {
+        "after_insert": "ecommerce_integrations.shopify.product.upload_erpnext_item",
+        "on_update": "ecommerce_integrations.shopify.product.upload_erpnext_item",
+        "validate": [
+            "ecommerce_integrations.utils.taxation.validate_tax_template",
+            "ecommerce_integrations.unicommerce.product.validate_item",
+        ],
+    },
+    "Sales Order": {
+        "on_update_after_submit": "ecommerce_integrations.unicommerce.order.update_shipping_info",
+        "on_cancel": "ecommerce_integrations.unicommerce.status_updater.ignore_pick_list_on_sales_order_cancel",
+    },
+    "Stock Entry": {
+        "validate": "ecommerce_integrations.unicommerce.grn.validate_stock_entry_for_grn",
+        "on_submit": "ecommerce_integrations.unicommerce.grn.upload_grn",
+        "on_cancel": "ecommerce_integrations.unicommerce.grn.prevent_grn_cancel",
+    },
+    "Item Price": {
+        "on_change": "ecommerce_integrations.utils.price_list.discard_item_prices"
+    },
+    "Pick List": {"validate": "ecommerce_integrations.unicommerce.pick_list.validate"},
+    "Sales Invoice": {
+        "on_submit": "ecommerce_integrations.unicommerce.invoice.on_submit",
+        "on_cancel": "ecommerce_integrations.unicommerce.invoice.on_cancel",
+    },
+    "Delivery Note": {
+        "on_submit": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+    },
+    "Sales Invoice": {
+        "on_submit": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+    },
+    "Purchase Receipt": {
+        "on_submit": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+    },
+    "Purchase Invoice": {
+        "on_submit": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+    },
+    "Stock Entry": {
+        "on_submit": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+        "on_cancel": "ecommerce_integrations.shopify.doctype_triggers.realtime_inventory_sync.update_stock_on_spf",
+    },
 }
 
 # Scheduled Tasks
 # ---------------
 
 scheduler_events = {
-	"all": ["ecommerce_integrations.shopify.inventory.update_inventory_on_shopify"],
-	"daily": [],
-	"daily_long": [
-		"ecommerce_integrations.zenoti.doctype.zenoti_settings.zenoti_settings.sync_stocks",
-        "ecommerce_integrations.ecommerce_integrations.schduler.cron_sync_items_to_shopify"
-	],
-	"hourly": [
-		# "ecommerce_integrations.shopify.order.sync_old_orders",
-		"ecommerce_integrations.amazon.doctype.amazon_sp_api_settings.amazon_sp_api_settings.schedule_get_order_details",
-        "ecommerce_integrations.shopify.product.bulk_update_items_to_shopify"
-	],
-	"hourly_long": [
-		"ecommerce_integrations.zenoti.doctype.zenoti_settings.zenoti_settings.sync_invoices",
-		"ecommerce_integrations.unicommerce.product.upload_new_items",
-		"ecommerce_integrations.unicommerce.status_updater.update_sales_order_status",
-		"ecommerce_integrations.unicommerce.status_updater.update_shipping_package_status",
-	],
-	"weekly": [],
-	"monthly": [],
-	"cron": {
-		# Every five minutes
-		"*/5 * * * *": [
-			"ecommerce_integrations.unicommerce.order.sync_new_orders",
-			"ecommerce_integrations.unicommerce.inventory.update_inventory_on_unicommerce",
-			"ecommerce_integrations.unicommerce.delivery_note.prepare_delivery_note",
-		],
+    "all": ["ecommerce_integrations.shopify.inventory.update_inventory_on_shopify"],
+    "daily": [],
+    "daily_long": [
+        "ecommerce_integrations.zenoti.doctype.zenoti_settings.zenoti_settings.sync_stocks",
+        "ecommerce_integrations.ecommerce_integrations.schduler.cron_sync_items_to_shopify",
+        "ecommerce_integrations.shopify.page.shopify_import_products.shopify_import_products.queue_sync_all_products",
+    ],
+    "hourly": [
+        # "ecommerce_integrations.shopify.order.sync_old_orders",
+        "ecommerce_integrations.amazon.doctype.amazon_sp_api_settings.amazon_sp_api_settings.schedule_get_order_details",
+        "ecommerce_integrations.shopify.product.bulk_update_items_to_shopify",
+    ],
+    "hourly_long": [
+        "ecommerce_integrations.zenoti.doctype.zenoti_settings.zenoti_settings.sync_invoices",
+        "ecommerce_integrations.unicommerce.product.upload_new_items",
+        "ecommerce_integrations.unicommerce.status_updater.update_sales_order_status",
+        "ecommerce_integrations.unicommerce.status_updater.update_shipping_package_status",
+    ],
+    "weekly": [],
+    "monthly": [],
+    "cron": {
+        # Every five minutes
+        "*/5 * * * *": [
+            "ecommerce_integrations.unicommerce.order.sync_new_orders",
+            "ecommerce_integrations.unicommerce.inventory.update_inventory_on_unicommerce",
+            "ecommerce_integrations.unicommerce.delivery_note.prepare_delivery_note",
+        ],
         "0 */2 * * *": [
             "ecommerce_integrations.shopify.real_time_update.bulk_update_item_handle_and_image"
-        ]
-	},
+        ],
+    },
 }
 
 
@@ -261,5 +271,5 @@ before_tests = "ecommerce_integrations.utils.before_test.before_tests"
 
 
 default_log_clearing_doctypes = {
-	"Ecommerce Integration Log": 120,
+    "Ecommerce Integration Log": 120,
 }
