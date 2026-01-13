@@ -115,7 +115,9 @@ def _resync_product(product):
 
 
 def is_synced(product):
-    return ecommerce_item.is_synced(MODULE_NAME, integration_item_code=product)
+    return ecommerce_item.is_synced(
+        MODULE_NAME, integration_item_code=product
+    ) and ecommerce_item.is_meta_synced(MODULE_NAME, integration_item_code=product)
 
 
 @frappe.whitelist()
@@ -145,9 +147,9 @@ def queue_sync_all_products(*args, **kwargs):
             try:
                 publish(f"Syncing product {product.id}", br=False)
                 frappe.db.savepoint(savepoint)
-                # if is_synced(product.id):
-                # 	publish(f"Product {product.id} already synced. Skipping...")
-                # 	continue
+                if is_synced(product.id):
+                    publish(f"Product {product.id} already synced. Skipping...")
+                    continue
 
                 shopify_product = ShopifyProduct(product.id)
                 shopify_product.sync_product()
