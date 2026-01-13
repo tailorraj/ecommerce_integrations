@@ -205,7 +205,7 @@ def is_meta_synced(integration: str, integration_item_code: str) -> bool:
         "custom_water_resistant",
         "custom_brand_warranty",
     ]
-    values = frappe.db.get_value("Item", item_code, fields)
+    values = frappe.db.get_value("Item", item_code, fields, as_dict=1)
     for field in fields:
         if not values.get(field):
             return False
